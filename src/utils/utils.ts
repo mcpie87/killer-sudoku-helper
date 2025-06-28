@@ -16,7 +16,8 @@ function calculateSums(
   maxCount: number,
   minDigit: number,
   maxDigit: number,
-  maxUniqueDigits: number = 1
+  maxUniqueDigits: number = 1,
+  ignoredDigits: number[] = []
 ): Record<number, number[][]> {
   // Input validation
   if (
@@ -64,6 +65,10 @@ function calculateSums(
 
     const lastDigit = currentCombo[currentCombo.length - 1] ?? minDigit;
     for (let digit = lastDigit; digit <= maxDigit; digit++) {
+      if (ignoredDigits.includes(digit)) {
+        continue;
+      }
+
       const currentCount = digitCounts.get(digit) || 0;
       if (currentCount >= maxUniqueDigits) {
         continue;

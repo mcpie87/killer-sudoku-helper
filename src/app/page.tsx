@@ -12,18 +12,25 @@ export default function Home() {
     minCount: 1,
     maxCount: 9,
     maxUniqueDigits: 1,
+    ignoredDigits: [] as number[],
   });
+  const lastFocusedRef = useRef<HTMLInputElement | null>(null);
 
   const [error, setError] = useState<string | null>(null);
 
   // Use refs to store current form values without triggering re-renders
   const formRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
 
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    lastFocusedRef.current = e.target;
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    setError(null);
+    const currentFocus = lastFocusedRef.current;
 
+    setError(null);
     try {
       // Collect all current values from the form inputs
       const newFormData = {
@@ -34,26 +41,35 @@ export default function Home() {
         minCount: parseInt(formRefs.current.minCount?.value || '1') || 1,
         maxCount: parseInt(formRefs.current.maxCount?.value || '9') || 9,
         maxUniqueDigits: parseInt(formRefs.current.maxUniqueDigits?.value || '1') || 1,
+        ignoredDigits: formRefs.current.ignoredDigits?.value?.split(',').filter(Boolean).map(Number) || [],
       };
 
       console.log("Submitted", newFormData);
-      setFormData(newFormData);
+      setFormData({ ...newFormData });
     } catch (err) {
       console.error("Error processing form:", err);
       setError(err instanceof Error ? err.message : "An error occurred while processing the form");
     }
+
+    if (currentFocus) {
+      setTimeout(() => {
+        currentFocus.focus();
+        currentFocus.select?.();
+      }, 0);
+    }
   };
 
-  const NumberInputComponent = ({ label, name, defaultValue }: { label: string, name: string, defaultValue: number }) => {
+  const InputComponent = ({ label, name, defaultValue, type }: { label: string, name: string, defaultValue: number | string, type?: string }) => {
     return (
       <div className="flex items-center">
         <label className="w-1/4 text-sm font-medium text-gray-700">{label}</label>
         <input
-          type="number"
+          type={type ?? "number"}
           name={name}
           ref={(el) => { formRefs.current[name] = el; }}
           defaultValue={defaultValue}
           onClick={(e) => e.currentTarget.select()}
+          onFocus={handleFocus}
           className="w-1/2 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
@@ -71,7 +87,8 @@ export default function Home() {
       formData.maxCount,
       formData.minDigit,
       formData.maxDigit,
-      formData.maxUniqueDigits
+      formData.maxUniqueDigits,
+      formData.ignoredDigits
     );
     console.log("Form data", formData);
   } catch (err) {
@@ -86,13 +103,14 @@ export default function Home() {
       </div>
       <div className="bg-white p-8 rounded-lg shadow-lg flex w-full max-w-4xl">
         <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
-          <NumberInputComponent name="minSum" defaultValue={formData.minSum} label="Min sum" />
-          <NumberInputComponent name="maxSum" defaultValue={formData.maxSum} label="Max sum" />
-          <NumberInputComponent name="minDigit" defaultValue={formData.minDigit} label="Min digit (1-9)" />
-          <NumberInputComponent name="maxDigit" defaultValue={formData.maxDigit} label="Max digit (1-9)" />
-          <NumberInputComponent name="minCount" defaultValue={formData.minCount} label="Min amount of digits" />
-          <NumberInputComponent name="maxCount" defaultValue={formData.maxCount} label="Max amount of digits" />
-          <NumberInputComponent name="maxUniqueDigits" defaultValue={formData.maxUniqueDigits} label="Max unique digits" />
+          <InputComponent name="minSum" defaultValue={formData.minSum} label="Min sum" />
+          <InputComponent name="maxSum" defaultValue={formData.maxSum} label="Max sum" />
+          <InputComponent name="minDigit" defaultValue={formData.minDigit} label="Min digit (1-9)" />
+          <InputComponent name="maxDigit" defaultValue={formData.maxDigit} label="Max digit (1-9)" />
+          <InputComponent name="minCount" defaultValue={formData.minCount} label="Min amount of digits" />
+          <InputComponent name="maxCount" defaultValue={formData.maxCount} label="Max amount of digits" />
+          <InputComponent name="maxUniqueDigits" defaultValue={formData.maxUniqueDigits} label="Max unique digits" />
+          <InputComponent name="ignoredDigits" defaultValue={formData.ignoredDigits.join(',')} label="Ignored digits (comma-separated)" type="text" />
           <button
             type="submit"
             className="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
@@ -106,7 +124,7 @@ export default function Home() {
           )}
         </form>
         <div className="flex-1 ml-8 p-4 bg-gray-50 rounded-md">
-          <h2 className="text-lg font-semibold text-gray-800">Results (Max unique: {formData.maxUniqueDigits})</h2>
+          <h2 className="text-lg font-semibold text-gray-800">Results (Max unique: {formData.maxUniqueDigits} {formData.ignoredDigits.length > 0 ? `(ignoring ${formData.ignoredDigits.join(', ')})` : ''})</h2>
           {calculationError ? (
             <div className="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
               <strong>Calculation Error:</strong> {calculationError}
