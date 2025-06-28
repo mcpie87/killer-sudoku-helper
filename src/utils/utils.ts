@@ -17,7 +17,8 @@ function calculateSums(
   minDigit: number,
   maxDigit: number,
   maxUniqueDigits: number = 1,
-  ignoredDigits: number[] = []
+  ignoredDigits: number[] = [],
+  mustHaveDigits: number[] = []
 ): Record<number, number[][]> {
   // Input validation
   if (
@@ -51,7 +52,8 @@ function calculateSums(
     if (
       remainingSum === 0 &&
       currentCombo.length >= minCount &&
-      currentCombo.length <= maxCount
+      currentCombo.length <= maxCount &&
+      mustHaveDigits.every((digit) => currentCombo.includes(digit))
     ) {
       results[targetSum] = results[targetSum] || [];
       results[targetSum].push([...currentCombo]);

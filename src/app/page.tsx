@@ -13,6 +13,7 @@ export default function Home() {
     maxCount: 9,
     maxUniqueDigits: 1,
     ignoredDigits: [] as number[],
+    mustHaveDigits: [] as number[],
   });
   const lastFocusedRef = useRef<HTMLInputElement | null>(null);
 
@@ -42,6 +43,7 @@ export default function Home() {
         maxCount: parseInt(formRefs.current.maxCount?.value || '9') || 9,
         maxUniqueDigits: parseInt(formRefs.current.maxUniqueDigits?.value || '1') || 1,
         ignoredDigits: formRefs.current.ignoredDigits?.value?.split(',').filter(Boolean).map(Number) || [],
+        mustHaveDigits: formRefs.current.mustHaveDigits?.value?.split(',').filter(Boolean).map(Number) || [],
       };
 
       console.log("Submitted", newFormData);
@@ -88,7 +90,8 @@ export default function Home() {
       formData.minDigit,
       formData.maxDigit,
       formData.maxUniqueDigits,
-      formData.ignoredDigits
+      formData.ignoredDigits,
+      formData.mustHaveDigits
     );
     console.log("Form data", formData);
   } catch (err) {
@@ -111,6 +114,7 @@ export default function Home() {
           <InputComponent name="maxCount" defaultValue={formData.maxCount} label="Max amount of digits" />
           <InputComponent name="maxUniqueDigits" defaultValue={formData.maxUniqueDigits} label="Max unique digits" />
           <InputComponent name="ignoredDigits" defaultValue={formData.ignoredDigits.join(',')} label="Ignored digits (comma-separated)" type="text" />
+          <InputComponent name="mustHaveDigits" defaultValue={formData.mustHaveDigits.join(',')} label="Must have digits (comma-separated)" type="text" />
           <button
             type="submit"
             className="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
@@ -124,7 +128,11 @@ export default function Home() {
           )}
         </form>
         <div className="flex-1 ml-8 p-4 bg-gray-50 rounded-md">
-          <h2 className="text-lg font-semibold text-gray-800">Results (Max unique: {formData.maxUniqueDigits} {formData.ignoredDigits.length > 0 ? `(ignoring ${formData.ignoredDigits.join(', ')})` : ''})</h2>
+          <h2 className="text-lg font-semibold text-gray-800">Settings</h2>
+          <h3>Max unique digits: <strong>{formData.maxUniqueDigits}</strong></h3>
+          {formData.ignoredDigits.length > 0 && <h3>Ignored digits: <strong>{formData.ignoredDigits.join(', ')}</strong></h3>}
+          {formData.mustHaveDigits.length > 0 && <h3>Must have digits: <strong>{formData.mustHaveDigits.join(', ')}</strong></h3>}
+          <h2 className="text-lg font-semibold text-gray-800 flex flex-col items-center">Results</h2>
           {calculationError ? (
             <div className="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
               <strong>Calculation Error:</strong> {calculationError}
