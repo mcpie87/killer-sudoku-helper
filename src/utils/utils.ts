@@ -18,7 +18,8 @@ function calculateSums(
   maxDigit: number,
   maxUniqueDigits: number = 1,
   ignoredDigits: number[] = [],
-  mustHaveDigits: number[] = []
+  mustHaveDigits: number[] = [],
+  exactSums: number[] = []
 ): Record<number, number[][]> {
   // Input validation
   if (
@@ -95,6 +96,14 @@ function calculateSums(
   }
 
   // Process each target sum
+  if (exactSums.length > 0) {
+    exactSums.forEach((sum) => {
+      findCombinations(sum, sum, []);
+      // results[sum] = results[sum] || [];
+      // results[sum].push([sum]);
+    });
+    return results;
+  }
   for (let sum = minSum; sum <= maxSum; sum++) {
     findCombinations(sum, sum, []);
   }

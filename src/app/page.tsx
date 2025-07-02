@@ -14,6 +14,7 @@ export default function Home() {
     maxUniqueDigits: 1,
     ignoredDigits: [] as number[],
     mustHaveDigits: [] as number[],
+    exactSums: [] as number[],
   });
   const lastFocusedRef = useRef<HTMLInputElement | null>(null);
 
@@ -44,6 +45,7 @@ export default function Home() {
         maxUniqueDigits: parseInt(formRefs.current.maxUniqueDigits?.value || '1') || 1,
         ignoredDigits: formRefs.current.ignoredDigits?.value?.split(',').filter(Boolean).map(Number) || [],
         mustHaveDigits: formRefs.current.mustHaveDigits?.value?.split(',').filter(Boolean).map(Number) || [],
+        exactSums: formRefs.current.exactSums?.value?.split(',').filter(Boolean).map(Number) || [],
       };
 
       console.log("Submitted", newFormData);
@@ -91,7 +93,8 @@ export default function Home() {
       formData.maxDigit,
       formData.maxUniqueDigits,
       formData.ignoredDigits,
-      formData.mustHaveDigits
+      formData.mustHaveDigits,
+      formData.exactSums
     );
     console.log("Form data", formData);
   } catch (err) {
@@ -106,6 +109,7 @@ export default function Home() {
       </div>
       <div className="bg-white p-8 rounded-lg shadow-lg flex w-full max-w-4xl">
         <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
+          <InputComponent name="exactSums" defaultValue={formData.exactSums.join(',')} label="Exact sums (comma-separated)" type="text" />
           <InputComponent name="minSum" defaultValue={formData.minSum} label="Min sum" />
           <InputComponent name="maxSum" defaultValue={formData.maxSum} label="Max sum" />
           <InputComponent name="minDigit" defaultValue={formData.minDigit} label="Min digit (1-9)" />
@@ -143,7 +147,12 @@ export default function Home() {
                 <p><strong>Sum:</strong> {sum}</p>
                 <ul>
                   {combinations.map((combination, index) => (
-                    <li key={index}>{combination.join(' + ')}</li>
+                    <div key={index} className="flex space-x-1">
+                      <input type="checkbox" />
+                      <div>
+                        {combination.join(' + ')}
+                      </div>
+                    </div>
                   ))}
                 </ul>
               </div>
