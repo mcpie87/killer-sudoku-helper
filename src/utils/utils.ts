@@ -1,3 +1,9 @@
+function checkDigitCounts(sum: number[], digitCounts: Record<number, number>) {
+  return Object.entries(digitCounts)
+    .every(([digit, count]) => sum.includes(+digit) && sum.filter((x) => x === +digit).length === count);
+}
+
+
 /**
  * Calculates all possible combinations of digits that sum up to target values within given constraints.
  * @param minSum - Minimum target sum
@@ -19,7 +25,8 @@ function calculateSums(
   maxUniqueDigits: number = 1,
   ignoredDigits: number[] = [],
   mustHaveDigits: number[] = [],
-  exactSums: number[] = []
+  exactSums: number[] = [],
+  digitCountsMap: Record<number, number> = {}
 ): Record<number, number[][]> {
   // Input validation
   if (
@@ -54,7 +61,8 @@ function calculateSums(
       remainingSum === 0 &&
       currentCombo.length >= minCount &&
       currentCombo.length <= maxCount &&
-      mustHaveDigits.every((digit) => currentCombo.includes(digit))
+      mustHaveDigits.every((digit) => currentCombo.includes(digit)) &&
+      checkDigitCounts(currentCombo, digitCountsMap)
     ) {
       results[targetSum] = results[targetSum] || [];
       results[targetSum].push([...currentCombo]);

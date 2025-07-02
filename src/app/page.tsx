@@ -15,12 +15,10 @@ export default function Home() {
     ignoredDigits: [] as number[],
     mustHaveDigits: [] as number[],
     exactSums: [] as number[],
+    digitCounts: {} as Record<number, number>,
   });
   const lastFocusedRef = useRef<HTMLInputElement | null>(null);
-
   const [error, setError] = useState<string | null>(null);
-
-  // Use refs to store current form values without triggering re-renders
   const formRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
 
   const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
@@ -29,12 +27,28 @@ export default function Home() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
     const currentFocus = lastFocusedRef.current;
-
     setError(null);
+
     try {
-      // Collect all current values from the form inputs
+      const rawDigitCounts = formRefs.current.digitCounts?.value || '';
+      let digitCounts: Record<number, number> = {};
+      if (rawDigitCounts.trim()) {
+        const parts = rawDigitCounts.split(',').map(part => part.trim());
+        for (const entry of parts) {
+          const [digitStr, countStr] = entry.split(':').map(x => x.trim());
+          const digit = parseInt(digitStr);
+          const count = parseInt(countStr);
+          if (
+            isNaN(digit) || isNaN(count) ||
+            digit < 1 || digit > 9 || count < 1
+          ) {
+            throw new Error(`Invalid digitCounts entry: "${entry}". Format must be like "1:3,2:2"`);
+          }
+          digitCounts[digit] = count;
+        }
+      }
+
       const newFormData = {
         minSum: parseInt(formRefs.current.minSum?.value || '0') || 0,
         maxSum: parseInt(formRefs.current.maxSum?.value || '0') || 0,
@@ -46,6 +60,7 @@ export default function Home() {
         ignoredDigits: formRefs.current.ignoredDigits?.value?.split(',').filter(Boolean).map(Number) || [],
         mustHaveDigits: formRefs.current.mustHaveDigits?.value?.split(',').filter(Boolean).map(Number) || [],
         exactSums: formRefs.current.exactSums?.value?.split(',').filter(Boolean).map(Number) || [],
+        digitCounts,
       };
 
       console.log("Submitted", newFormData);
@@ -94,9 +109,9 @@ export default function Home() {
       formData.maxUniqueDigits,
       formData.ignoredDigits,
       formData.mustHaveDigits,
-      formData.exactSums
+      formData.exactSums,
+      formData.digitCounts
     );
-    console.log("Form data", formData);
   } catch (err) {
     console.error("Error calculating partitions:", err);
     calculationError = err instanceof Error ? err.message : "Error calculating results";
@@ -119,6 +134,7 @@ export default function Home() {
           <InputComponent name="maxUniqueDigits" defaultValue={formData.maxUniqueDigits} label="Max unique digits" />
           <InputComponent name="ignoredDigits" defaultValue={formData.ignoredDigits.join(',')} label="Ignored digits (comma-separated)" type="text" />
           <InputComponent name="mustHaveDigits" defaultValue={formData.mustHaveDigits.join(',')} label="Must have digits (comma-separated)" type="text" />
+          <InputComponent name="digitCounts" defaultValue={Object.entries(formData.digitCounts).map(([d, c]) => `${d}:${c}`).join(',')} label="Digit counts (e.g. 1:3,2:2)" type="text" />
           <button
             type="submit"
             className="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
@@ -136,6 +152,15 @@ export default function Home() {
           <h3>Max unique digits: <strong>{formData.maxUniqueDigits}</strong></h3>
           {formData.ignoredDigits.length > 0 && <h3>Ignored digits: <strong>{formData.ignoredDigits.join(', ')}</strong></h3>}
           {formData.mustHaveDigits.length > 0 && <h3>Must have digits: <strong>{formData.mustHaveDigits.join(', ')}</strong></h3>}
+          {Object.keys(formData.digitCounts).length > 0 && (
+            <h3>Digit counts:
+              <strong className="ml-1">
+                {Object.entries(formData.digitCounts).map(([digit, count]) =>
+                  `${digit}×${count}`).join(', ')
+                }
+              </strong>
+            </h3>
+          )}
           <h2 className="text-lg font-semibold text-gray-800 flex flex-col items-center">Results</h2>
           {calculationError ? (
             <div className="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
@@ -149,9 +174,7 @@ export default function Home() {
                   {combinations.map((combination, index) => (
                     <div key={index} className="flex space-x-1">
                       <input type="checkbox" />
-                      <div>
-                        {combination.join(' + ')}
-                      </div>
+                      <div>{combination.join(' + ')}</div>
                     </div>
                   ))}
                 </ul>
