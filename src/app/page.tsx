@@ -89,7 +89,7 @@ export default function Home() {
     }
   };
 
-  const InputComponent = ({ label, name, defaultValue, type }: { label: string, name: string, defaultValue: number | string, type?: string }) => {
+  const InputComponent = ({ label, name, defaultValue, type, ignoreFocus }: { label: string, name: string, defaultValue: number | string, type?: string, ignoreFocus?: boolean }) => {
     return (
       <div className="flex items-center">
         <label className="w-1/4 text-sm font-medium text-gray-700">{label}</label>
@@ -99,7 +99,7 @@ export default function Home() {
           ref={(el) => { formRefs.current[name] = el; }}
           defaultValue={defaultValue}
           onClick={(e) => e.currentTarget.select()}
-          onFocus={handleFocus}
+          onFocus={ignoreFocus ? undefined : handleFocus}
           className="w-1/2 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
@@ -143,13 +143,14 @@ export default function Home() {
           <InputComponent name="minCount" defaultValue={formData.minCount} label="Min amount of digits" />
           <InputComponent name="maxCount" defaultValue={formData.maxCount} label="Max amount of digits" />
           <InputComponent name="maxUniqueDigits" defaultValue={formData.maxUniqueDigits} label="Max unique digits" />
-          <InputComponent name="ignoredDigits" defaultValue={formData.ignoredDigits.join(',')} label="Ignored digits (comma-separated)" type="text" />
-          <InputComponent name="mustHaveDigits" defaultValue={formData.mustHaveDigits.join(',')} label="Must have digits (comma-separated)" type="text" />
+          <InputComponent name="ignoredDigits" defaultValue={formData.ignoredDigits.join(',')} label="Ignored digits (comma-separated)" type="text" ignoreFocus={true} />
+          <InputComponent name="mustHaveDigits" defaultValue={formData.mustHaveDigits.join(',')} label="Must have digits (comma-separated)" type="text" ignoreFocus={true} />
           <InputComponent
             name="digitCounts"
             defaultValue={Object.entries(formData.digitCounts).map(([d, c]) => `${d}:${c.min === c.max ? c.min : `${c.min}-${c.max}`}`).join(',')}
             label="Digit counts (e.g. 1:2-5, 2:3)"
             type="text"
+            ignoreFocus={true}
           />
 
           <button
