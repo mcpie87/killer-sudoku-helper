@@ -1,6 +1,10 @@
-function checkDigitCounts(sum: number[], digitCounts: Record<number, number>) {
-  return Object.entries(digitCounts)
-    .every(([digit, count]) => sum.includes(+digit) && sum.filter((x) => x === +digit).length === count);
+
+function checkDigitCounts(sum: number[], digitCountsMap: Record<number, { min: number; max: number }>): boolean {
+  return Object.entries(digitCountsMap).every(([digitStr, { min, max }]) => {
+    const digit = +digitStr;
+    const count = sum.filter((x) => x === digit).length;
+    return count >= min && count <= max;
+  });
 }
 
 
@@ -26,7 +30,7 @@ function calculateSums(
   ignoredDigits: number[] = [],
   mustHaveDigits: number[] = [],
   exactSums: number[] = [],
-  digitCountsMap: Record<number, number> = {}
+  digitCountsMap: Record<number, { min: number; max: number }> = {},
 ): Record<number, number[][]> {
   // Input validation
   if (

@@ -15,7 +15,7 @@ export default function Home() {
     ignoredDigits: [] as number[],
     mustHaveDigits: [] as number[],
     exactSums: [] as number[],
-    digitCounts: {} as Record<number, number>,
+    digitCounts: {} as Record<number, { min: number; max: number }>,
   });
   const lastFocusedRef = useRef<HTMLInputElement | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -32,20 +32,32 @@ export default function Home() {
 
     try {
       const rawDigitCounts = formRefs.current.digitCounts?.value || '';
-      let digitCounts: Record<number, number> = {};
+      const digitCounts: Record<number, { min: number; max: number }> = {};
+
       if (rawDigitCounts.trim()) {
         const parts = rawDigitCounts.split(',').map(part => part.trim());
         for (const entry of parts) {
-          const [digitStr, countStr] = entry.split(':').map(x => x.trim());
+          const [digitStr, rangeStr] = entry.split(':').map(x => x.trim());
           const digit = parseInt(digitStr);
-          const count = parseInt(countStr);
-          if (
-            isNaN(digit) || isNaN(count) ||
-            digit < 1 || digit > 9 || count < 1
-          ) {
-            throw new Error(`Invalid digitCounts entry: "${entry}". Format must be like "1:3,2:2"`);
+          if (isNaN(digit) || digit < 1 || digit > 9 || !rangeStr) {
+            throw new Error(`Invalid digitCounts entry: "${entry}". Must be like "1:2-5" or "2:3"`);
           }
-          digitCounts[digit] = count;
+
+          if (rangeStr.includes('-')) {
+            const [minStr, maxStr] = rangeStr.split('-').map(x => x.trim());
+            const min = parseInt(minStr);
+            const max = parseInt(maxStr);
+            if (isNaN(min) || isNaN(max) || min < 1 || max < min) {
+              throw new Error(`Invalid range for digit ${digit}: "${rangeStr}"`);
+            }
+            digitCounts[digit] = { min, max };
+          } else {
+            const count = parseInt(rangeStr);
+            if (isNaN(count) || count < 1) {
+              throw new Error(`Invalid count for digit ${digit}: "${rangeStr}"`);
+            }
+            digitCounts[digit] = { min: count, max: count };
+          }
         }
       }
 
@@ -63,7 +75,6 @@ export default function Home() {
         digitCounts,
       };
 
-      console.log("Submitted", newFormData);
       setFormData({ ...newFormData });
     } catch (err) {
       console.error("Error processing form:", err);
@@ -110,7 +121,7 @@ export default function Home() {
       formData.ignoredDigits,
       formData.mustHaveDigits,
       formData.exactSums,
-      formData.digitCounts
+      formData.digitCounts // <-- Pass to your updated backend
     );
   } catch (err) {
     console.error("Error calculating partitions:", err);
@@ -134,7 +145,13 @@ export default function Home() {
           <InputComponent name="maxUniqueDigits" defaultValue={formData.maxUniqueDigits} label="Max unique digits" />
           <InputComponent name="ignoredDigits" defaultValue={formData.ignoredDigits.join(',')} label="Ignored digits (comma-separated)" type="text" />
           <InputComponent name="mustHaveDigits" defaultValue={formData.mustHaveDigits.join(',')} label="Must have digits (comma-separated)" type="text" />
-          <InputComponent name="digitCounts" defaultValue={Object.entries(formData.digitCounts).map(([d, c]) => `${d}:${c}`).join(',')} label="Digit counts (e.g. 1:3,2:2)" type="text" />
+          <InputComponent
+            name="digitCounts"
+            defaultValue={Object.entries(formData.digitCounts).map(([d, c]) => `${d}:${c.min === c.max ? c.min : `${c.min}-${c.max}`}`).join(',')}
+            label="Digit counts (e.g. 1:2-5, 2:3)"
+            type="text"
+          />
+
           <button
             type="submit"
             className="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
@@ -147,19 +164,18 @@ export default function Home() {
             </div>
           )}
         </form>
+
         <div className="flex-1 ml-8 p-4 bg-gray-50 rounded-md">
           <h2 className="text-lg font-semibold text-gray-800">Settings</h2>
           <h3>Max unique digits: <strong>{formData.maxUniqueDigits}</strong></h3>
           {formData.ignoredDigits.length > 0 && <h3>Ignored digits: <strong>{formData.ignoredDigits.join(', ')}</strong></h3>}
           {formData.mustHaveDigits.length > 0 && <h3>Must have digits: <strong>{formData.mustHaveDigits.join(', ')}</strong></h3>}
           {Object.keys(formData.digitCounts).length > 0 && (
-            <h3>Digit counts:
-              <strong className="ml-1">
-                {Object.entries(formData.digitCounts).map(([digit, count]) =>
-                  `${digit}×${count}`).join(', ')
-                }
-              </strong>
-            </h3>
+            <h3>Digit counts: <strong>{
+              Object.entries(formData.digitCounts).map(([digit, range]) =>
+                `${digit}×${range.min === range.max ? range.min : `${range.min}-${range.max}`}`
+              ).join(', ')
+            }</strong></h3>
           )}
           <h2 className="text-lg font-semibold text-gray-800 flex flex-col items-center">Results</h2>
           {calculationError ? (
