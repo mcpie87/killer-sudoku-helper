@@ -47,13 +47,13 @@ export default function Home() {
             const [minStr, maxStr] = rangeStr.split('-').map(x => x.trim());
             const min = parseInt(minStr);
             const max = parseInt(maxStr);
-            if (isNaN(min) || isNaN(max) || min < 1 || max < min) {
+            if (isNaN(min) || isNaN(max) || min < 0 || max < min) {
               throw new Error(`Invalid range for digit ${digit}: "${rangeStr}"`);
             }
             digitCounts[digit] = { min, max };
           } else {
             const count = parseInt(rangeStr);
-            if (isNaN(count) || count < 1) {
+            if (isNaN(count) || count < 0) {
               throw new Error(`Invalid count for digit ${digit}: "${rangeStr}"`);
             }
             digitCounts[digit] = { min: count, max: count };
